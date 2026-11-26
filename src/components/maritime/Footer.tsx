@@ -1,12 +1,18 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Anchor, Phone, Mail, MessageCircle, MapPin, Shield } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { SITE_CONTACT } from "@/data/maritime-data";
 
 export function Footer() {
+  const [year, setYear] = useState(2026);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
+
   return (
     <footer className="bg-[#050B16] text-white border-t border-white/10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
@@ -117,7 +123,7 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <p className="flex items-center gap-1.5">
             <Anchor className="size-3.5 text-sky-500" />
-            Copyright © {new Date().getFullYear()} Marine Suppliers Chile SPA — All rights reserved.
+            Copyright © {year} Marine Suppliers Chile SPA — All rights reserved.
           </p>
           <p className="font-mono tracking-wider text-slate-600">
             IMPA · SOLAS · SHIP CHANDLER
