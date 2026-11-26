@@ -17,7 +17,10 @@ export interface QuotationRecord {
   createdAt: string;
 }
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+// Serverless filesystems are read-only except for /tmp, so use it on Vercel.
+const DATA_DIR = process.env.VERCEL
+  ? path.join("/tmp", "fonseca-data")
+  : path.join(process.cwd(), ".data");
 const DATA_FILE = path.join(DATA_DIR, "quotations.json");
 
 const SEED_QUOTATIONS: QuotationRecord[] = [
