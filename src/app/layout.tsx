@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Barlow_Condensed, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { QuoteManifestProvider } from "@/components/maritime/QuoteManifestContext";
+import { SitePreferencesProvider } from "@/components/maritime/SitePreferencesContext";
 
 const barlowCondensed = Barlow_Condensed({
   subsets: ["latin"],
@@ -22,9 +23,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Marine Suppliers Chile SPA | Suministros Marinos y Equipos Marítimos en Chile",
+  title: "Marine Suppliers Chile SPA | Marine Supplies & Ship Chandlers in Chile",
   description:
-    "Suministros marinos de calidad en Chile: equipos marítimos, provisiones, insumos IMPA y seguridad SOLAS para la navegación. Solicita tu cotización 24/7.",
+    "Quality marine supplies in Chile: maritime equipment, provisions, IMPA stores and SOLAS safety for shipping. Request a quotation 24/7.",
   icons: {
     icon: "/images/logo-round.png",
   },
@@ -37,11 +38,21 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="es"
+      lang="en"
       className={`${barlowCondensed.variable} ${plusJakarta.variable} ${jetbrainsMono.variable} h-full`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var l=localStorage.getItem('fonseca-language');if(l==='es')document.documentElement.lang='es';if(localStorage.getItem('fonseca-theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}",
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground overflow-x-hidden">
-        <QuoteManifestProvider>{children}</QuoteManifestProvider>
+        <SitePreferencesProvider>
+          <QuoteManifestProvider>{children}</QuoteManifestProvider>
+        </SitePreferencesProvider>
       </body>
     </html>
   );

@@ -12,6 +12,8 @@ import {
   Layers,
   CheckCircle2,
   ClipboardPlus,
+  SlidersHorizontal,
+  ChevronDown,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +31,8 @@ import {
   type SupplyDivisionCategory,
 } from "@/data/maritime-data";
 import { useQuoteManifest } from "./QuoteManifestContext";
+import { useSitePreferences, type TranslationKey } from "./SitePreferencesContext";
+import { localizeDivision } from "@/data/spanish-translations";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -37,11 +41,44 @@ export function OfferDivisionsSection() {
   const [activeTab, setActiveTab] = useState<SupplyDivisionCategory>("all");
   const [selectedDivision, setSelectedDivision] = useState<SupplyDivision | null>(null);
   const { addItem, hasItem, setManifestOpen } = useQuoteManifest();
+  const { language, t } = useSitePreferences();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const filterTabs: { value: SupplyDivisionCategory; labelKey: TranslationKey }[] = [
+    { value: "all", labelKey: "divisions.tab.all" },
+    { value: "deck-safety", labelKey: "divisions.tab.deck" },
+    { value: "engine-chemical", labelKey: "divisions.tab.engine" },
+    { value: "provisions-cabin", labelKey: "divisions.tab.provisions" },
+    { value: "navigation-office", labelKey: "divisions.tab.navigation" },
+  ];
+
+  const renderFilterTriggers = (compact: boolean) =>
+    filterTabs.map((tab, index) => (
+      <TabsTrigger
+        key={tab.value}
+        value={tab.value}
+        className={
+          compact
+            ? `${index === 0 ? "col-span-2 " : ""}h-auto! min-h-9 w-full whitespace-normal! px-2 py-1 text-center text-[11px] font-semibold leading-tight cursor-pointer`
+            : "px-3 py-1.5 text-xs font-semibold cursor-pointer"
+        }
+      >
+        {t(tab.labelKey)}
+      </TabsTrigger>
+    ));
+
+  const activeFilterLabel = t(
+    filterTabs.find((tab) => tab.value === activeTab)?.labelKey ?? "divisions.tab.all",
+  );
 
   const filteredDivisions = useMemo(() => {
     if (activeTab === "all") return SUPPLY_DIVISIONS;
     return SUPPLY_DIVISIONS.filter((d) => d.category === activeTab);
   }, [activeTab]);
+
+  const selectedLocalized = selectedDivision
+    ? localizeDivision(selectedDivision, language)
+    : null;
 
   useGSAP(
     () => {
@@ -102,57 +139,74 @@ export function OfferDivisionsSection() {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Heading */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-12">
+        <div className="flex flex-col gap-8 mb-12">
           <div className="space-y-3 max-w-2xl">
             <div className="division-header-el flex items-center gap-2 text-xs font-mono uppercase tracking-[0.22em] text-[#374470]">
               <Layers className="size-4 text-sky-600" />
-              Catálogo Integral IMPA · 9 Divisiones
+              {t("divisions.eyebrow")}
             </div>
             <h2 className="division-header-el font-display text-4xl sm:text-6xl font-extrabold uppercase tracking-tight text-[#374470]">
-              What We Offer
+              {t("divisions.title")}
             </h2>
             <div className="division-header-el h-1 w-20 bg-[#374470]" />
             <p className="division-header-el text-slate-600 text-base sm:text-lg">
-              Desde repuestos de sala de máquinas y publicaciones IMO hasta provisiones frescas y
-              equipos certificados SOLAS. Haz clic en cualquier división para ver especificaciones o
-              añadirla a tu manifiesto de cotización.
+              {t("divisions.text")}
             </p>
           </div>
 
           {/* Interactive Filter Tabs (shadcn Tabs) */}
-          <div className="division-header-el">
+          <div className="division-header-el flex justify-center">
+            {/* Mobile: compact Filters button with collapsible options */}
+            <div className="w-full sm:hidden">
+              <button
+                type="button"
+                aria-expanded={filtersOpen}
+                aria-controls="division-filters"
+                onClick={() => setFiltersOpen((open) => !open)}
+                className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm cursor-pointer"
+              >
+                <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#374470]">
+                  <SlidersHorizontal className="size-4 text-sky-600" />
+                  {t("divisions.filters")}
+                </span>
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="max-w-[150px] truncate text-xs font-medium text-slate-500">
+                    {activeFilterLabel}
+                  </span>
+                  <ChevronDown
+                    className={`size-4 shrink-0 text-slate-500 transition-transform ${
+                      filtersOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </span>
+              </button>
+              {filtersOpen && (
+                <Tabs
+                  className="mt-2 w-full items-center"
+                  value={activeTab}
+                  onValueChange={(val) => {
+                    setActiveTab(val as SupplyDivisionCategory);
+                    setFiltersOpen(false);
+                  }}
+                >
+                  <TabsList
+                    id="division-filters"
+                    className="grid! h-auto! w-full! grid-cols-2 items-stretch! gap-1.5 rounded-lg bg-white border border-slate-200 p-1.5 shadow-sm"
+                  >
+                    {renderFilterTriggers(true)}
+                  </TabsList>
+                </Tabs>
+              )}
+            </div>
+
+            {/* Desktop: centered single row */}
             <Tabs
+              className="hidden w-full items-center sm:flex"
               value={activeTab}
               onValueChange={(val) => setActiveTab(val as SupplyDivisionCategory)}
             >
-              <TabsList className="flex-wrap h-auto bg-white border border-slate-200 p-1.5 shadow-sm gap-1">
-                <TabsTrigger value="all" className="px-3 py-1.5 text-xs font-semibold cursor-pointer">
-                  Todas (9)
-                </TabsTrigger>
-                <TabsTrigger
-                  value="deck-safety"
-                  className="px-3 py-1.5 text-xs font-semibold cursor-pointer"
-                >
-                  Seguridad & SOLAS
-                </TabsTrigger>
-                <TabsTrigger
-                  value="engine-chemical"
-                  className="px-3 py-1.5 text-xs font-semibold cursor-pointer"
-                >
-                  Máquinas & Químicos
-                </TabsTrigger>
-                <TabsTrigger
-                  value="provisions-cabin"
-                  className="px-3 py-1.5 text-xs font-semibold cursor-pointer"
-                >
-                  Provisiones & Cabina
-                </TabsTrigger>
-                <TabsTrigger
-                  value="navigation-office"
-                  className="px-3 py-1.5 text-xs font-semibold cursor-pointer"
-                >
-                  Cartas IMO & Oficina
-                </TabsTrigger>
+              <TabsList className="bg-white border border-slate-200 p-1.5 shadow-sm gap-1">
+                {renderFilterTriggers(false)}
               </TabsList>
             </Tabs>
           </div>
@@ -163,6 +217,7 @@ export function OfferDivisionsSection() {
           {filteredDivisions.map((division, idx) => {
             const added = hasItem(division.id);
             const isPortrait = division.aspect === "portrait";
+            const localized = localizeDivision(division, language);
 
             return (
               <article
@@ -173,7 +228,7 @@ export function OfferDivisionsSection() {
                 <div className="relative h-64 w-full overflow-hidden bg-[#0B162C]">
                   <Image
                     src={division.image}
-                    alt={division.alt}
+                    alt={localized.alt}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className={`${
@@ -192,7 +247,7 @@ export function OfferDivisionsSection() {
                     <button
                       type="button"
                       onClick={() => setSelectedDivision(division)}
-                      aria-label={`Ver detalles de ${division.title}`}
+                      aria-label={t("divisions.details", { title: localized.title })}
                       className="size-8 rounded-full bg-white/90 text-[#081020] flex items-center justify-center shadow hover:bg-sky-400 hover:text-slate-950 transition-colors cursor-pointer"
                     >
                       <ArrowUpRight className="size-4" />
@@ -203,13 +258,13 @@ export function OfferDivisionsSection() {
                 {/* Card Body */}
                 <div className="flex flex-1 flex-col p-6">
                   <div className="text-[11px] font-mono uppercase tracking-wider text-sky-700 font-semibold">
-                    {division.subtitle}
+                    {localized.subtitle}
                   </div>
                   <h3 className="mt-1.5 font-display text-2xl font-bold uppercase tracking-tight text-slate-900 group-hover:text-[#374470] transition-colors leading-tight">
-                    {division.title}
+                    {localized.title}
                   </h3>
                   <p className="mt-2.5 text-sm text-slate-600 leading-relaxed line-clamp-3 flex-1">
-                    {division.description}
+                    {localized.description}
                   </p>
 
                   <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2.5">
@@ -226,12 +281,12 @@ export function OfferDivisionsSection() {
                       {added ? (
                         <>
                           <Check className="size-4" />
-                          En Manifiesto
+                          {t("divisions.inManifest")}
                         </>
                       ) : (
                         <>
                           <Plus className="size-4" />
-                          Añadir a Cotización
+                          {t("divisions.add")}
                         </>
                       )}
                     </Button>
@@ -241,7 +296,7 @@ export function OfferDivisionsSection() {
                       onClick={() => setSelectedDivision(division)}
                       className="h-9 border-slate-300 text-slate-700 hover:bg-slate-100 cursor-pointer"
                     >
-                      Detalles
+                      {t("divisions.detailsBtn")}
                     </Button>
                   </div>
                 </div>
@@ -257,12 +312,12 @@ export function OfferDivisionsSection() {
         onOpenChange={(open) => !open && setSelectedDivision(null)}
       >
         <DialogContent className="sm:max-w-2xl bg-white text-slate-900 p-0 overflow-hidden">
-          {selectedDivision && (
+          {selectedDivision && selectedLocalized && (
             <>
               <div className="relative h-60 w-full bg-[#081020]">
                 <Image
                   src={selectedDivision.image}
-                  alt={selectedDivision.alt}
+                  alt={selectedLocalized.alt}
                   fill
                   sizes="(max-width: 768px) 100vw, 672px"
                   className={
@@ -278,10 +333,10 @@ export function OfferDivisionsSection() {
                   </Badge>
                   <DialogHeader>
                     <DialogTitle className="font-display text-3xl uppercase tracking-wide text-white">
-                      {selectedDivision.title}
+                      {selectedLocalized.title}
                     </DialogTitle>
                     <DialogDescription className="text-sky-200 text-sm">
-                      {selectedDivision.subtitle}
+                      {selectedLocalized.subtitle}
                     </DialogDescription>
                   </DialogHeader>
                 </div>
@@ -289,14 +344,14 @@ export function OfferDivisionsSection() {
 
               <div className="p-6 space-y-5">
                 <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
-                  {selectedDivision.description}
+                  {selectedLocalized.description}
                 </p>
 
                 <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 space-y-2.5">
                   <div className="text-xs font-mono uppercase tracking-wider text-[#374470] font-semibold">
-                    Alcance de Suministro Habitual
+                    {t("divisions.scope")}
                   </div>
-                  {selectedDivision.highlights.map((item) => (
+                  {selectedLocalized.highlights.map((item) => (
                     <div key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
                       <CheckCircle2 className="size-4 text-emerald-600 shrink-0 mt-0.5" />
                       <span>{item}</span>
@@ -310,7 +365,7 @@ export function OfferDivisionsSection() {
                     onClick={() => setSelectedDivision(null)}
                     className="cursor-pointer"
                   >
-                    Cerrar
+                    {t("divisions.close")}
                   </Button>
                   <Button
                     onClick={() => {
@@ -321,7 +376,7 @@ export function OfferDivisionsSection() {
                     className="bg-[#374470] hover:bg-[#2a355a] text-white cursor-pointer"
                   >
                     <ClipboardPlus className="size-4" />
-                    Añadir y Abrir Manifiesto
+                    {t("divisions.addOpen")}
                   </Button>
                 </div>
               </div>

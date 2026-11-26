@@ -6,5 +6,9 @@ export async function GET() {
   if (!admin) {
     return NextResponse.json({ authenticated: false, admin: null });
   }
-  return NextResponse.json({ authenticated: true, admin });
+  return NextResponse.json({
+    authenticated: true,
+    admin,
+    expiresAt: admin.expiresAt,
+  });
 }

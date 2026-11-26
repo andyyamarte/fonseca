@@ -8,10 +8,13 @@ import { useGSAP } from "@gsap/react";
 import { MapPin, MessageCircle, Phone, Mail, Navigation } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CHILEAN_PORTS, SITE_CONTACT } from "@/data/maritime-data";
+import { SPANISH_ADDRESS } from "@/data/spanish-translations";
+import { useSitePreferences } from "./SitePreferencesContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function PortTickerAndEmblem() {
+  const { language, t } = useSitePreferences();
   const sectionRef = useRef<HTMLElement>(null);
   const tickerRef = useRef<HTMLDivElement>(null);
 
@@ -63,12 +66,12 @@ export function PortTickerAndEmblem() {
       {/* Architectural Brand Emblem & Direct Contact Split */}
       <div className="relative nautical-grid-light py-16 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-12 gap-10 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             {/* Official Ship-Bow Circular Emblem */}
             <div className="emblem-reveal lg:col-span-6 flex justify-center">
               <div className="relative w-full max-w-[460px] rounded-2xl bg-white p-6 sm:p-8 shadow-[0_24px_70px_rgba(29,60,80,0.16)] border border-slate-300/80">
                 <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-widest text-[#374470] mb-4">
-                  <span>OFFICIAL CHANDLER SEAL</span>
+                  <span>{t("emblem.seal")}</span>
                   <span>EST. CHILE · IMPA</span>
                 </div>
                 <div className="relative aspect-[814/713] w-full overflow-hidden rounded-xl bg-white">
@@ -87,24 +90,24 @@ export function PortTickerAndEmblem() {
             <div className="emblem-reveal lg:col-span-6 space-y-6">
               <Badge className="bg-[#374470] text-white font-mono text-xs uppercase tracking-widest px-3 py-1">
                 <Navigation className="size-3.5 mr-1.5 text-sky-300" />
-                Mesa de Despacho Portuario
+                {t("dispatch.badge")}
               </Badge>
 
               <div className="space-y-3">
                 <h2 className="font-display text-4xl sm:text-5xl font-extrabold uppercase tracking-tight text-[#374470] leading-none">
-                  Contact Us · Atención Directa
+                  {t("dispatch.title")}
                 </h2>
                 <p className="text-slate-700 text-base sm:text-lg leading-relaxed max-w-xl">
-                  Coordinación inmediata para capitanes, jefes de máquinas y agencias navieras en
-                  todo el litoral chileno. Respuesta ágil por WhatsApp, telefonía directa o correo
-                  operativo.
+                  {t("dispatch.text")}
                 </p>
               </div>
 
               <div className="rounded-xl bg-white/85 backdrop-blur-sm border border-slate-300 p-5 space-y-3.5 shadow-sm">
                 <div className="flex items-start gap-3">
                   <MapPin className="size-5 text-[#374470] shrink-0 mt-0.5" />
-                  <span className="text-sm font-medium text-slate-800">{SITE_CONTACT.address}</span>
+                  <span className="text-sm font-medium text-slate-800">
+                    {language === "es" ? SPANISH_ADDRESS : SITE_CONTACT.address}
+                  </span>
                 </div>
                 <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1">
                   {SITE_CONTACT.phones.map((phone) => (
@@ -135,14 +138,14 @@ export function PortTickerAndEmblem() {
                   className="inline-flex h-13 items-center gap-3 bg-[#455A64] hover:bg-[#4F6672] px-7 text-sm font-bold uppercase tracking-wider text-white shadow-lg transition-all hover:-translate-y-0.5"
                 >
                   <MessageCircle className="size-5 text-emerald-300" />
-                  WHATSAPP DIRECTO
+                  {t("dispatch.whatsapp")}
                 </a>
 
                 <a
                   href="#quotation"
                   className="inline-flex h-13 items-center gap-2 border-2 border-[#374470] px-7 text-sm font-bold uppercase tracking-wider text-[#374470] hover:bg-[#374470] hover:text-white transition-all"
                 >
-                  Formulario de Cotización
+                  {t("dispatch.form")}
                 </a>
               </div>
             </div>

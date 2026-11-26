@@ -9,10 +9,13 @@ import { ArrowDownRight, Anchor, Shield, Clock, Globe2, MessageCircle } from "lu
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SITE_CONTACT } from "@/data/maritime-data";
+import { SPANISH_COORDINATES_LABEL } from "@/data/spanish-translations";
+import { useSitePreferences } from "./SitePreferencesContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function HeroSection() {
+  const { language, t } = useSitePreferences();
   const containerRef = useRef<HTMLElement>(null);
   const bgLayerRef = useRef<HTMLDivElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
@@ -97,7 +100,7 @@ export function HeroSection() {
         >
           <Image
             src="/images/hero-poster.jpg"
-            alt="Marine Suppliers Chile port container vessel operations"
+            alt={t("hero.imageAlt")}
             fill
             priority
             sizes="100vw"
@@ -105,7 +108,7 @@ export function HeroSection() {
           />
           <iframe
             src={SITE_CONTACT.vimeoEmbedUrl}
-            title="Marine Suppliers Chile Vessel Background Video"
+            title={t("hero.videoTitle")}
             allow="autoplay; fullscreen; picture-in-picture"
             className="absolute top-1/2 left-1/2 min-w-[177.78vh] min-h-[100vw] w-full h-full -translate-x-1/2 -translate-y-1/2 opacity-80"
           />
@@ -121,10 +124,15 @@ export function HeroSection() {
             <div className="hero-reveal flex flex-wrap items-center gap-3">
               <Badge className="bg-sky-500/15 text-sky-300 border border-sky-400/30 px-3 py-1 font-mono text-xs uppercase tracking-[0.18em] backdrop-blur-md">
                 <span className="inline-block size-2 rounded-full bg-emerald-400 mr-2 animate-pulse" />
-                Chile Port Operations · {SITE_CONTACT.coordinates.label}
+                {t("hero.badgePort", {
+                  coords:
+                    language === "es"
+                      ? SPANISH_COORDINATES_LABEL
+                      : SITE_CONTACT.coordinates.label,
+                })}
               </Badge>
               <Badge className="bg-amber-500/15 text-amber-300 border border-amber-400/30 px-3 py-1 font-mono text-xs uppercase tracking-[0.16em] backdrop-blur-md">
-                IMPA & SOLAS Standard
+                {t("hero.badgeStandard")}
               </Badge>
             </div>
 
@@ -138,16 +146,14 @@ export function HeroSection() {
               <div className="flex items-center gap-4 pt-2">
                 <span className="h-[2px] w-12 bg-amber-400" />
                 <p className="font-display text-2xl sm:text-3xl font-bold uppercase tracking-[0.22em] text-amber-300">
-                  Ship Chandler
+                  {t("brand.tagline").split(" · ")[1]}
                 </p>
               </div>
             </div>
 
             <p className="hero-reveal max-w-2xl text-base sm:text-lg text-slate-200/95 leading-relaxed">
-              Abastecimiento integral de naves en los principales puertos de Chile. Equipos
-              técnicos IMPA, provisiones frescas, seguridad SOLAS, mantenimiento preventivo MORDEC™
-              y entrega coordinada en muelle o lancha{" "}
-              <span className="text-white font-semibold">antes de zarpar</span>.
+              {t("hero.description")}
+              <span className="text-white font-semibold">{t("hero.beforeSailing")}</span>.
             </p>
 
             <div className="hero-reveal flex flex-wrap items-center gap-4 pt-2">
@@ -156,7 +162,7 @@ export function HeroSection() {
                 onClick={goToQuotation}
                 className="h-14 px-8 rounded-none bg-white text-[#081020] hover:bg-sky-100 font-bold uppercase tracking-widest text-xs sm:text-sm shadow-[0_14px_35px_rgba(14,165,233,0.25)] transition-all hover:-translate-y-0.5 cursor-pointer"
               >
-                Get a Quotation
+                {t("hero.quote")}
                 <ArrowDownRight className="size-4" />
               </Button>
 
@@ -166,7 +172,7 @@ export function HeroSection() {
                 onClick={goToDivisions}
                 className="h-14 px-7 rounded-none border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white backdrop-blur-md font-semibold uppercase tracking-wider text-xs sm:text-sm cursor-pointer"
               >
-                Explorar Catálogo IMPA
+                {t("hero.catalog")}
               </Button>
 
               <a
@@ -176,7 +182,7 @@ export function HeroSection() {
                 className="inline-flex h-14 items-center gap-2.5 border border-emerald-400/35 bg-[#455A64]/90 hover:bg-[#4F6672] px-6 text-xs sm:text-sm font-bold uppercase tracking-wider text-white backdrop-blur-md transition-all hover:-translate-y-0.5"
               >
                 <MessageCircle className="size-4 text-emerald-300" />
-                WhatsApp 24/7
+                {t("common.whatsapp")}
               </a>
             </div>
           </div>
@@ -188,23 +194,23 @@ export function HeroSection() {
             {[
               {
                 icon: Anchor,
-                value: "09 Divisiones",
-                label: "Engine, Deck, Cabin, SOLAS & Provisions",
+                value: t("hero.stat1Value"),
+                label: t("hero.stat1Label"),
               },
               {
                 icon: Globe2,
-                value: "11+ Puertos",
-                label: "Cobertura nacional en costa chilena",
+                value: t("hero.stat2Value"),
+                label: t("hero.stat2Label"),
               },
               {
                 icon: Shield,
-                value: "Norma IMPA / IMO",
-                label: "Equipos certificados & listas PSC",
+                value: t("hero.stat3Value"),
+                label: t("hero.stat3Label"),
               },
               {
                 icon: Clock,
-                value: "On Time, Every Time",
-                label: "Despacho 24/7 antes del zarpe",
+                value: t("hero.stat4Value"),
+                label: t("hero.stat4Label"),
               },
             ].map((stat) => (
               <div

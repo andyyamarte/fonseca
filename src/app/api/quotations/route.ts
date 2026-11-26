@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { getCurrentAdmin } from "@/lib/admin-auth";
 import { createQuotation, listQuotations } from "@/lib/quotations-store";
+import { apiMessage, languageFromHeaders } from "@/lib/language";
 
-export async function GET() {
+export async function GET(request: Request) {
   const admin = await getCurrentAdmin();
   if (!admin) {
     return NextResponse.json(
-      { error: "Acceso denegado. Solo el Administrador puede consultar cotizaciones." },
+      { error: apiMessage(languageFromHeaders(request.headers), "adminDenied") },
       { status: 401 }
     );
   }
@@ -15,6 +16,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const language = languageFromHeaders(request.headers);
   try {
     const body = (await request.json()) as {
       vesselName?: string;
@@ -33,24 +35,27 @@ export async function POST(request: Request) {
 
     if (!email || !email.includes("@")) {
       return NextResponse.json(
-        { error: "Por favor ingresa un correo electrónico válido." },
+        { error: apiMessage(language, "invalidEmail") },
         { status: 400 }
       );
     }
 
     const record = await createQuotation({
-      vesselName: (body.vesselName || "Vessel Inquiry").trim(),
-      port: (body.port || "Chilean Port").trim(),
-      contactName: contactName || "Chief Officer / Purchasing",
+      vesselName: (body.vesselName || apiMessage(language, "vesselInquiry")).trim(),
+      port: (body.port || apiMessage(language, "chileanPort")).trim(),
+      contactName: contactName || apiMessage(language, "chiefOfficer"),
       email,
-      division: (body.division || "GENERAL SHIP CHANDLING").trim(),
+      division: (body.division || apiMessage(language, "generalShipChandling")).trim(),
       items: Array.isArray(body.items) ? body.items : [],
-      message: message || "General quotation request",
+      message: message || apiMessage(language, "generalRequest"),
       attachmentNames: Array.isArray(body.attachmentNames) ? body.attachmentNames : [],
     });
 
     return NextResponse.json({ quotation: record }, { status: 201 });
   } catch {
-    return NextResponse.json({ error: "No se pudo procesar la cotización." }, { status: 400 });
+    return NextResponse.json(
+      { error: apiMessage(language, "quotationError") },
+      { status: 400 }
+    );
   }
 }

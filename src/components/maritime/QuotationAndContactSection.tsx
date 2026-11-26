@@ -23,13 +23,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { SITE_CONTACT } from "@/data/maritime-data";
+import { SPANISH_ADDRESS, localizeManifestItem } from "@/data/spanish-translations";
 import { useQuoteManifest } from "./QuoteManifestContext";
+import { useSitePreferences } from "./SitePreferencesContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function QuotationAndContactSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const { items } = useQuoteManifest();
+  const { language, t } = useSitePreferences();
+  const localizedItems = items.map((item) => localizeManifestItem(item, language));
+  const emailHref = `mailto:info@marinesuppliers.cl?subject=${encodeURIComponent(
+    t("quote.emailSubject")
+  )}&body=${encodeURIComponent(t("quote.emailBody"))}`;
+  const mapUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3329.9!2d${SITE_CONTACT.coordinates.lng}!3d${SITE_CONTACT.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDI0JzIzLjQiUyA3MMKwMzQnMjEuNyJX!5e0!3m2!1${language}!2scl!4v1`;
   const [formState, setFormState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -58,8 +66,9 @@ export function QuotationAndContactSection() {
       email: formData.get("email") as string,
       vesselName: formData.get("vessel") as string,
       port: formData.get("port") as string,
-      division: items.length > 0 ? items.map((i) => i.title).join(", ") : "GENERAL",
-      items: items.map((i) => `${i.code} — ${i.title}`),
+      division:
+        localizedItems.length > 0 ? localizedItems.map((i) => i.title).join(", ") : "GENERAL",
+      items: localizedItems.map((i) => `${i.code} — ${i.title}`),
       message: formData.get("message") as string,
       attachmentNames: [],
     };
@@ -67,16 +76,16 @@ export function QuotationAndContactSection() {
     try {
       const res = await fetch("/api/quotations", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-ui-language": language },
         body: JSON.stringify(body),
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        throw new Error(data.error || "Error al enviar");
+        throw new Error(data.error || t("quote.errorDefault"));
       }
       setFormState("success");
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Error de conexión");
+      setErrorMsg(err instanceof Error ? err.message : t("quote.connectionError"));
       setFormState("error");
     }
   }
@@ -91,26 +100,24 @@ export function QuotationAndContactSection() {
         <div className="max-w-2xl mb-12 space-y-3">
           <div className="quote-section-reveal flex items-center gap-2 text-xs font-mono uppercase tracking-[0.22em] text-[#374470]">
             <FileText className="size-4 text-sky-600" />
-            Cotización & Contacto Directo
+            {t("quote.eyebrow")}
           </div>
           <h2 className="quote-section-reveal font-display text-4xl sm:text-6xl font-extrabold uppercase tracking-tight text-[#374470]">
-            Get Your Quotation
+            {t("quote.title")}
           </h2>
           <div className="quote-section-reveal h-1 w-20 bg-[#374470]" />
           <p className="quote-section-reveal text-slate-600 text-base sm:text-lg">
-            Our mission is to supply your vessel with the best maritime industry equipment and ship
-            stores, including provisions needed for your ship, all at the most competitive market
-            prices. We are your trusted ship chandler, delivering on time, every time.
+            {t("quote.text")}
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
           {/* Form Panel */}
           <div className="quote-section-reveal rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:p-8 shadow-sm">
             <div className="flex items-center gap-2.5 mb-6">
               <Send className="size-5 text-[#374470]" />
               <h3 className="font-display text-2xl font-bold uppercase tracking-wide text-[#374470]">
-                Get in touch with us.
+                {t("quote.formTitle")}
               </h3>
             </div>
 
@@ -118,18 +125,15 @@ export function QuotationAndContactSection() {
               <div className="text-center py-12 space-y-4">
                 <CheckCircle2 className="size-14 text-emerald-500 mx-auto" />
                 <h4 className="font-display text-2xl font-bold uppercase text-emerald-700">
-                  ¡Cotización Recibida!
+                  {t("quote.successTitle")}
                 </h4>
-                <p className="text-sm text-slate-600 max-w-md mx-auto">
-                  Tu solicitud ha sido registrada exitosamente. Nuestro equipo operativo se pondrá en
-                  contacto contigo en las próximas horas.
-                </p>
+                <p className="text-sm text-slate-600 max-w-md mx-auto">{t("quote.successText")}</p>
                 <Button
                   variant="outline"
                   onClick={() => setFormState("idle")}
                   className="mt-4 cursor-pointer"
                 >
-                  Enviar otra cotización
+                  {t("quote.sendAnother")}
                 </Button>
               </div>
             ) : (
@@ -137,19 +141,19 @@ export function QuotationAndContactSection() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="name" className="text-xs uppercase tracking-wider text-slate-600">
-                      Name / Nombre
+                      {t("quote.name")}
                     </Label>
                     <Input
                       id="name"
                       name="name"
                       required
-                      placeholder="Capt. / Ch. Eng."
+                      placeholder={t("quote.namePlaceholder")}
                       className="bg-white"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="email" className="text-xs uppercase tracking-wider text-slate-600">
-                      Correo electrónico *
+                      {t("quote.email")}
                     </Label>
                     <Input
                       id="email"
@@ -165,7 +169,7 @@ export function QuotationAndContactSection() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="vessel" className="text-xs uppercase tracking-wider text-slate-600">
-                      Nombre del Buque
+                      {t("quote.vessel")}
                     </Label>
                     <Input
                       id="vessel"
@@ -176,7 +180,7 @@ export function QuotationAndContactSection() {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="port" className="text-xs uppercase tracking-wider text-slate-600">
-                      Puerto de Arribo
+                      {t("quote.port")}
                     </Label>
                     <Input
                       id="port"
@@ -191,9 +195,9 @@ export function QuotationAndContactSection() {
                   <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 space-y-1.5">
                     <div className="text-xs font-mono uppercase tracking-wider text-sky-800 font-semibold flex items-center gap-1.5">
                       <Paperclip className="size-3.5" />
-                      Ítems del Manifiesto ({items.length})
+                      {t("quote.items", { count: localizedItems.length })}
                     </div>
-                    {items.map((item) => (
+                    {localizedItems.map((item) => (
                       <div key={item.id} className="text-xs text-sky-700">
                         {item.code} — {item.title}
                       </div>
@@ -203,13 +207,13 @@ export function QuotationAndContactSection() {
 
                 <div className="space-y-1.5">
                   <Label htmlFor="message" className="text-xs uppercase tracking-wider text-slate-600">
-                    Message / Mensaje
+                    {t("quote.message")}
                   </Label>
                   <Textarea
                     id="message"
                     name="message"
                     rows={4}
-                    placeholder="Describe tu requisición: listas IMPA, cantidades, ETA del buque, instrucciones especiales..."
+                    placeholder={t("quote.messagePlaceholder")}
                     className="bg-white resize-none"
                   />
                 </div>
@@ -228,11 +232,11 @@ export function QuotationAndContactSection() {
                   >
                     {formState === "loading" ? (
                       <>
-                        <Loader2 className="size-4 animate-spin" /> Enviando...
+                        <Loader2 className="size-4 animate-spin" /> {t("quote.sending")}
                       </>
                     ) : (
                       <>
-                        Send / Enviar
+                        {t("quote.send")}
                         <Send className="size-4" />
                       </>
                     )}
@@ -254,9 +258,9 @@ export function QuotationAndContactSection() {
               <MessageCircle className="size-6 text-emerald-300" />
               <div>
                 <div className="font-bold text-sm uppercase tracking-wider">
-                  Contact us / Contáctanos
+                  {t("quote.whatsapp")}
                 </div>
-                <div className="text-xs text-emerald-100">WhatsApp disponible 24/7</div>
+                <div className="text-xs text-emerald-100">{t("quote.whatsappSub")}</div>
               </div>
             </a>
 
@@ -268,7 +272,7 @@ export function QuotationAndContactSection() {
 
               <div className="flex items-start gap-3 text-sm text-slate-700">
                 <MapPin className="size-5 text-[#374470] shrink-0 mt-0.5" />
-                <span>{SITE_CONTACT.address}</span>
+                <span>{language === "es" ? SPANISH_ADDRESS : SITE_CONTACT.address}</span>
               </div>
 
               <Separator />
@@ -285,7 +289,7 @@ export function QuotationAndContactSection() {
                   </a>
                 ))}
                 <a
-                  href={SITE_CONTACT.emailHref}
+                  href={emailHref}
                   className="flex items-center gap-2.5 text-sm font-semibold text-[#374470] hover:text-sky-700 transition-colors"
                 >
                   <Mail className="size-4" />
@@ -298,14 +302,14 @@ export function QuotationAndContactSection() {
             <div className="rounded-xl overflow-hidden border border-slate-200 shadow-sm">
               <div className="relative w-full h-[320px]">
                 <iframe
-                  src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3329.9!2d${SITE_CONTACT.coordinates.lng}!3d${SITE_CONTACT.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDI0JzIzLjQiUyA3MMKwMzQnMjEuNyJX!5e0!3m2!1ses!2scl!4v1`}
+                  src={mapUrl}
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Marine Suppliers Chile location map"
+                  title={t("quote.mapTitle")}
                   className="absolute inset-0"
                 />
               </div>
@@ -321,13 +325,16 @@ export function QuotationAndContactSection() {
                   className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#374470] hover:text-sky-700 transition-colors"
                 >
                   <Navigation className="size-3.5" />
-                  GET DIRECTIONS
+                  {t("quote.directions")}
                 </a>
               </div>
             </div>
 
-            <Badge className="bg-slate-100 text-slate-500 font-mono text-[10px] border border-slate-200 px-3 py-1">
-              Respuesta operativa en menos de 4 horas · Cotizaciones 24/7
+            <Badge
+              className="max-w-full justify-center text-center bg-slate-100 text-slate-500 font-mono text-[10px] border border-slate-200 px-3 py-1"
+              style={{ whiteSpace: "normal", height: "auto" }}
+            >
+              {t("quote.response")}
             </Badge>
           </div>
         </div>

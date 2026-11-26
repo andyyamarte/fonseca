@@ -23,25 +23,29 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { QuotationRecord, QuotationStatus } from "@/lib/quotations-store";
+import { clearAdminUiSession } from "@/lib/admin-ui-session";
+import { localizeQuotation } from "@/data/spanish-translations";
+import { PreferencesToggle } from "./PreferencesToggle";
+import { useSitePreferences, type TranslationKey } from "./SitePreferencesContext";
 
 const STATUS_CONFIG: Record<
   QuotationStatus,
-  { label: string; icon: React.ElementType; color: string; badgeClass: string }
+  { labelKey: TranslationKey; icon: React.ElementType; color: string; badgeClass: string }
 > = {
   pending: {
-    label: "Pendiente",
+    labelKey: "admin.status.pending",
     icon: Clock,
     color: "text-amber-500",
     badgeClass: "bg-amber-50 text-amber-700 border-amber-200",
   },
   quoted: {
-    label: "Cotizada",
+    labelKey: "admin.status.quoted",
     icon: FileText,
     color: "text-sky-500",
     badgeClass: "bg-sky-50 text-sky-700 border-sky-200",
   },
   dispatched: {
-    label: "Despachada",
+    labelKey: "admin.status.dispatched",
     icon: Truck,
     color: "text-emerald-500",
     badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -55,12 +59,14 @@ interface AdminDashboardProps {
 
 export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps) {
   const router = useRouter();
+  const { language, t } = useSitePreferences();
   const [quotations, setQuotations] = useState(initialQuotations);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   async function handleLogout() {
     await fetch("/api/admin/logout", { method: "POST" });
+    clearAdminUiSession();
     router.push("/");
     router.refresh();
   }
@@ -68,7 +74,9 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
   async function handleRefresh() {
     setRefreshing(true);
     try {
-      const res = await fetch("/api/quotations");
+      const res = await fetch("/api/quotations", {
+        headers: { "x-ui-language": language },
+      });
       const data = (await res.json()) as { quotations: QuotationRecord[] };
       if (data.quotations) setQuotations(data.quotations);
     } catch {
@@ -83,7 +91,7 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
     try {
       const res = await fetch(`/api/quotations/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-ui-language": language },
         body: JSON.stringify({ status }),
       });
       if (res.ok) {
@@ -100,10 +108,13 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("¿Eliminar esta cotización permanentemente?")) return;
+    if (!confirm(t("admin.deleteConfirm"))) return;
     setLoadingId(id);
     try {
-      const res = await fetch(`/api/quotations/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/quotations/${id}`, {
+        method: "DELETE",
+        headers: { "x-ui-language": language },
+      });
       if (res.ok) {
         setQuotations((prev) => prev.filter((q) => q.id !== id));
       }
@@ -138,16 +149,17 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
                 />
               </div>
               <span className="font-display text-lg font-bold uppercase tracking-wider text-white">
-                Admin Panel
+                {t("admin.panel")}
               </span>
             </a>
             <Badge className="bg-amber-500/15 text-amber-300 border border-amber-400/30 font-mono text-[10px] uppercase tracking-widest">
               <ShieldCheck className="size-3 mr-1" />
-              Administrador
+              {t("admin.badge")}
             </Badge>
           </div>
 
           <div className="flex items-center gap-3">
+            <PreferencesToggle compact />
             <span className="hidden sm:inline text-xs font-mono text-slate-400">
               {admin.email}
             </span>
@@ -158,7 +170,7 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
               className="border-white/20 bg-white/5 text-white hover:bg-white/15 hover:text-white cursor-pointer"
             >
               <ArrowLeft className="size-3.5" />
-              Sitio Público
+              {t("admin.publicSite")}
             </Button>
             <Button
               variant="ghost"
@@ -167,7 +179,7 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
               className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer"
             >
               <LogOut className="size-3.5" />
-              Cerrar Sesión
+              {t("admin.logout")}
             </Button>
           </div>
         </div>
@@ -177,11 +189,26 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
         {/* Stats Dashboard */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "Total Cotizaciones", value: stats.total, icon: Anchor, accent: "text-white" },
-            { label: "Pendientes", value: stats.pending, icon: Clock, accent: "text-amber-400" },
-            { label: "Cotizadas", value: stats.quoted, icon: FileText, accent: "text-sky-400" },
             {
-              label: "Despachadas",
+              label: t("admin.stat.total"),
+              value: stats.total,
+              icon: Anchor,
+              accent: "text-white",
+            },
+            {
+              label: t("admin.stat.pending"),
+              value: stats.pending,
+              icon: Clock,
+              accent: "text-amber-400",
+            },
+            {
+              label: t("admin.stat.quoted"),
+              value: stats.quoted,
+              icon: FileText,
+              accent: "text-sky-400",
+            },
+            {
+              label: t("admin.stat.dispatched"),
               value: stats.dispatched,
               icon: Truck,
               accent: "text-emerald-400",
@@ -209,7 +236,7 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
         {/* Quotation List */}
         <div className="flex items-center justify-between">
           <h2 className="font-display text-2xl font-bold uppercase tracking-wide">
-            Cotizaciones Recibidas
+            {t("admin.list")}
           </h2>
           <Button
             variant="outline"
@@ -219,7 +246,7 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
             className="border-white/20 bg-white/5 text-white hover:bg-white/15 hover:text-white cursor-pointer"
           >
             <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
-            Actualizar
+            {t("admin.refresh")}
           </Button>
         </div>
 
@@ -227,10 +254,7 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
           <Card className="bg-white/5 border-white/10 text-white">
             <CardContent className="py-16 text-center">
               <Ship className="size-12 mx-auto text-slate-500 mb-4" />
-              <p className="text-slate-400">
-                No hay cotizaciones registradas aún. Las solicitudes del formulario público
-                aparecerán aquí.
-              </p>
+              <p className="text-slate-400">{t("admin.empty")}</p>
             </CardContent>
           </Card>
         ) : (
@@ -239,6 +263,7 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
               const statusCfg = STATUS_CONFIG[qt.status];
               const StatusIcon = statusCfg.icon;
               const isLoading = loadingId === qt.id;
+              const localized = localizeQuotation(qt, language);
 
               return (
                 <Card
@@ -256,36 +281,40 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
                             className={`border font-mono text-[10px] uppercase tracking-widest ${statusCfg.badgeClass}`}
                           >
                             <StatusIcon className="size-3 mr-1" />
-                            {statusCfg.label}
+                            {t(statusCfg.labelKey)}
                           </Badge>
                           <span className="text-xs text-slate-500 font-mono">
-                            {new Date(qt.createdAt).toLocaleDateString("es-CL", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {new Date(qt.createdAt).toLocaleDateString(
+                              language === "es" ? "es-CL" : "en-US",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
                           </span>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
                           <span className="font-display text-lg font-bold text-white uppercase tracking-wide">
                             <Ship className="size-4 inline mr-1.5 text-sky-400" />
-                            {qt.vesselName}
+                            {localized.vesselName}
                           </span>
                           <span className="text-slate-400">
-                            Puerto: <span className="text-white font-medium">{qt.port}</span>
+                            {t("admin.port")}{" "}
+                            <span className="text-white font-medium">{localized.port}</span>
                           </span>
                         </div>
 
                         <div className="text-sm text-slate-300">
-                          <span className="font-semibold text-white">{qt.contactName}</span> ·{" "}
+                          <span className="font-semibold text-white">{localized.contactName}</span> ·{" "}
                           <a
                             href={`mailto:${qt.email}`}
                             className="text-sky-400 hover:underline"
                           >
-                            {qt.email}
+                            {localized.email}
                           </a>
                         </div>
 
@@ -293,11 +322,11 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
 
                         <div className="space-y-1.5">
                           <div className="text-xs font-mono uppercase tracking-wider text-slate-500">
-                            División: {qt.division}
+                            {t("admin.division")} {localized.division}
                           </div>
-                          {qt.items.length > 0 && (
+                          {localized.items.length > 0 && (
                             <div className="flex flex-wrap gap-1.5">
-                              {qt.items.map((item) => (
+                              {localized.items.map((item) => (
                                 <Badge
                                   key={item}
                                   variant="outline"
@@ -308,11 +337,11 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
                               ))}
                             </div>
                           )}
-                          <p className="text-sm text-slate-400 italic mt-1">{qt.message}</p>
-                          {qt.attachmentNames.length > 0 && (
+                          <p className="text-sm text-slate-400 italic mt-1">{localized.message}</p>
+                          {localized.attachmentNames.length > 0 && (
                             <div className="flex items-center gap-1.5 text-xs text-sky-400">
                               <ArrowUpRight className="size-3" />
-                              Adjuntos: {qt.attachmentNames.join(", ")}
+                              {t("admin.attachments")} {localized.attachmentNames.join(", ")}
                             </div>
                           )}
                         </div>
@@ -333,7 +362,7 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
                                 className="bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 border border-sky-400/30 cursor-pointer"
                               >
                                 <CheckCircle2 className="size-3.5" />
-                                Cotizar
+                                {t("admin.quoteAction")}
                               </Button>
                             )}
                             {qt.status !== "dispatched" && (
@@ -343,7 +372,7 @@ export function AdminDashboard({ admin, initialQuotations }: AdminDashboardProps
                                 className="bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-400/30 cursor-pointer"
                               >
                                 <Truck className="size-3.5" />
-                                Despachar
+                                {t("admin.dispatch")}
                               </Button>
                             )}
                             <Button

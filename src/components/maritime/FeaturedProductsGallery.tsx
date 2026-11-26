@@ -10,13 +10,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FEATURED_PRODUCTS, type FeaturedProduct } from "@/data/maritime-data";
 import { useQuoteManifest } from "./QuoteManifestContext";
+import { useSitePreferences } from "./SitePreferencesContext";
+import { localizeProduct } from "@/data/spanish-translations";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function FeaturedProductsGallery() {
   const sectionRef = useRef<HTMLElement>(null);
   const { addItem, hasItem } = useQuoteManifest();
+  const { language, t } = useSitePreferences();
   const [lightboxProduct, setLightboxProduct] = useState<FeaturedProduct | null>(null);
+  const localizedLightbox = lightboxProduct
+    ? localizeProduct(lightboxProduct, language)
+    : null;
 
   useGSAP(
     () => {
@@ -27,16 +33,6 @@ export function FeaturedProductsGallery() {
         stagger: 0.1,
         ease: "power3.out",
         scrollTrigger: { trigger: sectionRef.current, start: "top 80%", once: true },
-      });
-
-      gsap.from(".prod-tile", {
-        y: 36,
-        opacity: 0,
-        scale: 0.95,
-        duration: 0.65,
-        stagger: 0.08,
-        ease: "power2.out",
-        scrollTrigger: { trigger: ".prod-grid", start: "top 85%", once: true },
       });
     },
     { scope: sectionRef }
@@ -49,21 +45,21 @@ export function FeaturedProductsGallery() {
           <div className="max-w-2xl mb-12 space-y-3">
             <div className="prod-header flex items-center gap-2 text-xs font-mono uppercase tracking-[0.22em] text-[#374470]">
               <Package className="size-4 text-sky-600" />
-              Equipos Destacados · Referencia IMPA
+              {t("featured.eyebrow")}
             </div>
             <h2 className="prod-header font-display text-4xl sm:text-6xl font-extrabold uppercase tracking-tight text-[#374470]">
-              Featured Products
+              {t("featured.title")}
             </h2>
             <div className="prod-header h-1 w-20 bg-[#374470]" />
             <p className="prod-header text-slate-600 text-base sm:text-lg">
-              Muestra representativa de suministros bajo estándar IMPA disponibles para despacho
-              inmediato. Haz clic para ampliar o añade directamente a tu manifiesto de cotización.
+              {t("featured.text")}
             </p>
           </div>
 
           <div className="prod-grid grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {FEATURED_PRODUCTS.map((product) => {
               const added = hasItem(product.id);
+              const localized = localizeProduct(product, language);
               return (
                 <div
                   key={product.id}
@@ -73,7 +69,7 @@ export function FeaturedProductsGallery() {
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-white">
                     <Image
                       src={product.image}
-                      alt={product.alt}
+                      alt={localized.alt}
                       fill
                       sizes="(max-width: 768px) 50vw, 33vw"
                       className="object-contain p-3 transition-transform duration-500 group-hover:scale-105"
@@ -109,11 +105,11 @@ export function FeaturedProductsGallery() {
                       >
                         {added ? (
                           <>
-                            <Check className="size-3" /> Añadido
+                            <Check className="size-3" /> {t("featured.added")}
                           </>
                         ) : (
                           <>
-                            <Plus className="size-3" /> Cotizar
+                            <Plus className="size-3" /> {t("featured.quote")}
                           </>
                         )}
                       </Button>
@@ -122,10 +118,10 @@ export function FeaturedProductsGallery() {
 
                   <div className="p-3.5">
                     <div className="font-mono text-[10px] text-sky-700 font-semibold uppercase tracking-wider">
-                      {product.division}
+                      {localized.division}
                     </div>
                     <div className="text-sm font-semibold text-slate-900 mt-0.5 line-clamp-2 leading-snug">
-                      {product.name}
+                      {localized.name}
                     </div>
                   </div>
                 </div>
@@ -136,7 +132,7 @@ export function FeaturedProductsGallery() {
       </section>
 
       {/* Product Lightbox */}
-      {lightboxProduct && (
+      {lightboxProduct && localizedLightbox && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
           onClick={() => setLightboxProduct(null)}
@@ -155,7 +151,7 @@ export function FeaturedProductsGallery() {
             <div className="relative aspect-[16/10] w-full bg-slate-50 rounded-t-2xl overflow-hidden">
               <Image
                 src={lightboxProduct.image}
-                alt={lightboxProduct.alt}
+                alt={localizedLightbox.alt}
                 fill
                 sizes="672px"
                 className="object-contain p-6"
@@ -167,13 +163,13 @@ export function FeaturedProductsGallery() {
                 {lightboxProduct.impaCode}
               </Badge>
               <h3 className="font-display text-2xl sm:text-3xl font-bold uppercase tracking-tight text-[#374470]">
-                {lightboxProduct.name}
+                {localizedLightbox.name}
               </h3>
               <p className="text-sm text-slate-700 leading-relaxed">
-                {lightboxProduct.summary}
+                {localizedLightbox.summary}
               </p>
               <div className="flex flex-wrap gap-2">
-                {lightboxProduct.specs.map((spec) => (
+                {localizedLightbox.specs.map((spec) => (
                   <Badge
                     key={spec}
                     variant="secondary"
@@ -189,7 +185,7 @@ export function FeaturedProductsGallery() {
                   variant="outline"
                   className="cursor-pointer"
                 >
-                  Cerrar
+                  {t("featured.close")}
                 </Button>
                 <Button
                   onClick={() => {
@@ -203,7 +199,7 @@ export function FeaturedProductsGallery() {
                   }}
                   className="bg-[#374470] hover:bg-[#2a355a] text-white cursor-pointer"
                 >
-                  <Plus className="size-4" /> Añadir a Cotización
+                  <Plus className="size-4" /> {t("featured.add")}
                 </Button>
               </div>
             </div>

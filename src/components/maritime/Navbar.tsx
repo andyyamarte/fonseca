@@ -30,6 +30,13 @@ import {
   SUPPLY_DIVISIONS,
 } from "@/data/maritime-data";
 import { useQuoteManifest } from "./QuoteManifestContext";
+import { PreferencesToggle } from "./PreferencesToggle";
+import { useSitePreferences } from "./SitePreferencesContext";
+import {
+  localizeDivision,
+  localizeManifestItem,
+  localizeProduct,
+} from "@/data/spanish-translations";
 
 export function Navbar() {
   const {
@@ -40,6 +47,7 @@ export function Navbar() {
     setManifestOpen,
     setAdminDialogOpen,
   } = useQuoteManifest();
+  const { language, t } = useSitePreferences();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,20 +63,20 @@ export function Navbar() {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return { divisions: [], products: [] };
     return {
-      divisions: SUPPLY_DIVISIONS.filter(
+      divisions: SUPPLY_DIVISIONS.map((division) => localizeDivision(division, language)).filter(
         (d) =>
           d.title.toLowerCase().includes(q) ||
           d.subtitle.toLowerCase().includes(q) ||
           d.impaRange.toLowerCase().includes(q)
       ),
-      products: FEATURED_PRODUCTS.filter(
+      products: FEATURED_PRODUCTS.map((product) => localizeProduct(product, language)).filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
           p.impaCode.toLowerCase().includes(q) ||
           p.division.toLowerCase().includes(q)
       ),
     };
-  }, [searchQuery]);
+  }, [searchQuery, language]);
 
   function scrollToSection(id: string) {
     setMenuOpen(false);
@@ -92,7 +100,7 @@ export function Navbar() {
           <a
             href="#hero"
             className="flex items-center gap-3 group focus:outline-none"
-            aria-label="Marine Suppliers Chile SPA, Main Page"
+            aria-label={t("nav.mainPage")}
           >
             <div className="relative h-12 w-12 overflow-hidden rounded-full border border-white/25 bg-[#1D3C50]/80 shadow-md transition-transform duration-300 group-hover:scale-105">
               <Image
@@ -104,35 +112,37 @@ export function Navbar() {
                 priority
               />
             </div>
-            <div className="flex flex-col">
+            <div className="hidden sm:flex flex-col">
               <span className="font-display text-lg sm:text-xl font-bold tracking-wider text-white uppercase leading-none">
                 Marine Suppliers
               </span>
               <span className="font-mono text-[10px] tracking-[0.22em] text-sky-300 uppercase mt-1">
-                Chile SPA · Ship Chandler
+                {t("brand.tagline")}
               </span>
             </div>
           </a>
 
           <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-slate-200">
             <a href="#divisions" className="hover:text-sky-300 transition-colors">
-              Divisiones
+              {t("nav.divisions")}
             </a>
             <a href="#featured-impa" className="hover:text-sky-300 transition-colors">
-              IMPA Destacados
+              {t("nav.featured")}
             </a>
             <a href="#mordec" className="hover:text-sky-300 transition-colors">
-              MORDEC™
+              {t("nav.mordec")}
             </a>
             <a href="#operations" className="hover:text-sky-300 transition-colors">
-              Operaciones
+              {t("nav.operations")}
             </a>
             <a href="#quotation" className="hover:text-sky-300 transition-colors">
-              Cotización
+              {t("nav.quotation")}
             </a>
           </nav>
 
           <div className="flex items-center gap-2.5">
+            <PreferencesToggle />
+
             <Button
               variant="outline"
               size="sm"
@@ -140,7 +150,7 @@ export function Navbar() {
               className="relative h-9 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white cursor-pointer backdrop-blur-md"
             >
               <ClipboardList className="size-4 text-sky-300" />
-              <span className="hidden sm:inline">Cotizador</span>
+              <span className="hidden sm:inline">{t("nav.quoteList")}</span>
               {items.length > 0 && (
                 <Badge className="ml-0.5 h-5 min-w-5 px-1.5 bg-amber-500 text-slate-950 font-mono text-[11px] font-bold">
                   {items.length}
@@ -154,14 +164,14 @@ export function Navbar() {
               className="hidden sm:inline-flex h-9 bg-[#374470] hover:bg-[#495a93] text-white border border-sky-300/20 cursor-pointer"
             >
               <ShieldCheck className="size-4 text-sky-300" />
-              <span>Acceso Admin</span>
+              <span>{t("nav.adminAccess")}</span>
             </Button>
 
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setMenuOpen(true)}
-              aria-label="Abrir menú de navegación"
+              aria-label={t("nav.openMenu")}
               className="h-9 w-9 text-white hover:bg-white/15 hover:text-white cursor-pointer"
             >
               <Menu className="size-5" />
@@ -192,7 +202,7 @@ export function Navbar() {
                   Marine Suppliers Chile
                 </SheetTitle>
                 <SheetDescription className="text-xs font-mono text-sky-300/80 uppercase tracking-widest">
-                  Navegación & Buscador IMPA
+                  {t("drawer.title")}
                 </SheetDescription>
               </div>
             </div>
@@ -205,13 +215,13 @@ export function Navbar() {
                 htmlFor="drawer-search"
                 className="text-xs font-mono uppercase tracking-wider text-slate-400"
               >
-                Buscar Suministros / Códigos IMPA
+                {t("drawer.searchLabel")}
               </label>
               <div className="relative">
                 <Search className="size-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <Input
                   id="drawer-search"
-                  placeholder="Ej: SOLAS, IMPA 330189, Provisions, Grinder..."
+                  placeholder={t("drawer.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 bg-white/5 border-white/15 text-white placeholder:text-slate-500 h-10"
@@ -222,10 +232,7 @@ export function Navbar() {
                 <div className="rounded-lg border border-white/10 bg-white/5 p-3 space-y-2 max-h-56 overflow-y-auto">
                   {searchResults.divisions.length === 0 &&
                   searchResults.products.length === 0 ? (
-                    <p className="text-xs text-slate-400">
-                      Sin coincidencias directas. Puedes solicitar cualquier código IMPA en el
-                      formulario de cotización.
-                    </p>
+                    <p className="text-xs text-slate-400">{t("drawer.noResults")}</p>
                   ) : (
                     <>
                       {searchResults.divisions.map((div) => (
@@ -267,15 +274,15 @@ export function Navbar() {
             {/* Navigation Links */}
             <div className="space-y-1.5">
               <div className="text-xs font-mono uppercase tracking-wider text-slate-400 mb-2">
-                Secciones
+                {t("drawer.sections")}
               </div>
               {[
-                { id: "hero", label: "Inicio & Puente Marítimo" },
-                { id: "divisions", label: "What We Offer (9 Divisiones)" },
-                { id: "featured-impa", label: "Productos Destacados IMPA" },
-                { id: "mordec", label: "Catálogo MORDEC™" },
-                { id: "operations", label: "Operaciones Fast & On Time" },
-                { id: "quotation", label: "Solicitar Cotización & Mapa" },
+                { id: "hero", key: "drawer.nav.hero" as const },
+                { id: "divisions", key: "drawer.nav.divisions" as const },
+                { id: "featured-impa", key: "drawer.nav.featured" as const },
+                { id: "mordec", key: "drawer.nav.mordec" as const },
+                { id: "operations", key: "drawer.nav.operations" as const },
+                { id: "quotation", key: "drawer.nav.quotation" as const },
               ].map((navItem) => (
                 <button
                   key={navItem.id}
@@ -284,7 +291,7 @@ export function Navbar() {
                 >
                   <span className="flex items-center gap-2.5">
                     <Compass className="size-4 text-sky-400" />
-                    {navItem.label}
+                    {t(navItem.key)}
                   </span>
                   <ArrowRight className="size-3.5 text-slate-500" />
                 </button>
@@ -297,11 +304,10 @@ export function Navbar() {
             <div className="rounded-xl border border-[#374470]/60 bg-[#374470]/20 p-4 space-y-3">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-sky-300">
                 <ShieldCheck className="size-4" />
-                Acceso Exclusivo Administrador
+                {t("drawer.adminOnly")}
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                El inicio de sesión está habilitado únicamente para el Administrador de Marine
-                Suppliers Chile SPA.
+                {t("drawer.adminText")}
               </p>
               <Button
                 onClick={() => {
@@ -311,7 +317,7 @@ export function Navbar() {
                 className="w-full bg-[#374470] hover:bg-[#495a93] text-white cursor-pointer"
               >
                 <ShieldCheck className="size-4" />
-                Iniciar Sesión Administrador
+                {t("drawer.adminLogin")}
               </Button>
             </div>
           </div>
@@ -324,9 +330,9 @@ export function Navbar() {
               className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-medium"
             >
               <PhoneCall className="size-3.5" />
-              WhatsApp 24/7
+              {t("common.whatsapp")}
             </a>
-            <span className="font-mono">IMPA · SOLAS</span>
+            <span className="font-mono">{t("common.impaSolas")}</span>
           </div>
         </SheetContent>
       </Sheet>
@@ -340,65 +346,67 @@ export function Navbar() {
           <SheetHeader className="p-6 pb-4 border-b border-white/10">
             <SheetTitle className="font-display text-2xl uppercase tracking-wide text-white flex items-center gap-2">
               <Anchor className="size-5 text-sky-400" />
-              Manifiesto de Cotización
+              {t("manifest.title")}
             </SheetTitle>
             <SheetDescription className="text-slate-300 text-xs">
-              Agrupa divisiones o equipos IMPA para adjuntarlos directamente a tu solicitud de
-              cotización.
+              {t("manifest.description")}
             </SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-3">
-            {items.length === 0 ? (
+            {items.length === 0 && (
               <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-8 text-center space-y-3">
                 <ClipboardList className="size-10 mx-auto text-slate-500" />
                 <div className="text-sm font-medium text-slate-200">
-                  Tu manifiesto está vacío
+                  {t("manifest.empty")}
                 </div>
-                <p className="text-xs text-slate-400">
-                  Explora las 9 divisiones o productos IMPA y pulsa &ldquo;Añadir a
-                  Cotización&rdquo; para preparar tu requisición.
-                </p>
+                <p className="text-xs text-slate-400">{t("manifest.emptyHint")}</p>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => scrollToSection("divisions")}
                   className="border-white/20 bg-white/5 text-white hover:bg-white/15 cursor-pointer"
                 >
-                  Explorar Divisiones
+                  {t("manifest.explore")}
                 </Button>
               </div>
-            ) : (
-              items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3"
-                >
-                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-900">
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      fill
-                      sizes="56px"
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-mono text-[11px] text-amber-300">{item.code}</div>
-                    <div className="text-sm font-medium text-white truncate">{item.title}</div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => removeItem(item.id)}
-                    aria-label={`Quitar ${item.title}`}
-                    className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 cursor-pointer"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              ))
             )}
+
+            {items.length > 0 && (
+              items.map((item) => {
+                const localized = localizeManifestItem(item, language);
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3"
+                  >
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-900">
+                      <Image
+                        src={item.image}
+                        alt={localized.title}
+                        fill
+                        sizes="56px"
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-mono text-[11px] text-amber-300">{localized.code}</div>
+                      <div className="text-sm font-medium text-white truncate">
+                        {localized.title}
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => removeItem(item.id)}
+                      aria-label={t("manifest.removeItem", { item: localized.title })}
+                      className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 cursor-pointer"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                );
+              }))}
           </div>
 
           <div className="p-6 border-t border-white/10 bg-black/40 space-y-3">
@@ -409,14 +417,14 @@ export function Navbar() {
                 onClick={clearItems}
                 className="w-full text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
               >
-                Vaciar manifiesto
+                {t("manifest.clear")}
               </Button>
             )}
             <Button
               onClick={() => scrollToSection("quotation")}
               className="w-full h-11 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold uppercase tracking-wider cursor-pointer"
             >
-              Enviar Solicitud de Cotización
+              {t("manifest.send")}
               <ArrowRight className="size-4" />
             </Button>
           </div>

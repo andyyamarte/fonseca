@@ -8,13 +8,16 @@ import { ChevronLeft, ChevronRight, FileText, CheckCircle2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MORDEC_SLIDES } from "@/data/maritime-data";
+import { localizeSlide } from "@/data/spanish-translations";
+import { useSitePreferences } from "./SitePreferencesContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function MordecCatalogSection() {
+  const { language, t } = useSitePreferences();
   const sectionRef = useRef<HTMLElement>(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const slide = MORDEC_SLIDES[currentPage];
+  const slide = localizeSlide(MORDEC_SLIDES[currentPage], language);
 
   useGSAP(
     () => {
@@ -40,28 +43,26 @@ export function MordecCatalogSection() {
         <div className="max-w-2xl mb-12 space-y-3">
           <div className="mordec-header flex items-center gap-2 text-xs font-mono uppercase tracking-[0.22em] text-[#374470]">
             <FileText className="size-4 text-sky-600" />
-            Programa de Mantenimiento Preventivo
+            {t("mordec.eyebrow")}
           </div>
           <h2 className="mordec-header font-display text-4xl sm:text-6xl font-extrabold uppercase tracking-tight text-[#374470]">
-            MORDEC ROPE PREVENTIVE MAINTENANCE PRODUCTS
+            {t("mordec.title")}
           </h2>
           <div className="mordec-header h-1 w-20 bg-[#374470]" />
           <p className="mordec-header text-slate-600 text-base sm:text-lg">
-            Catálogo interactivo del programa de protección y lubricación MORDEC™ para cables de
-            acero, engranajes abiertos y equipos de cubierta. 8 páginas de especificaciones técnicas
-            y aplicaciones marítimas.
+            {t("mordec.text")}
           </p>
         </div>
 
         {/* Interactive Catalog Viewer */}
         <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white shadow-md overflow-hidden">
-          <div className="grid lg:grid-cols-2 min-h-[460px]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[460px]">
             {/* Left: "Canvas" Visual Panel */}
             <div className="bg-[#081020] p-8 sm:p-10 flex flex-col justify-center relative overflow-hidden">
               <div className="absolute inset-0 nautical-grid opacity-30" />
               <div className="relative z-10 space-y-5">
                 <Badge className="bg-amber-400 text-slate-950 font-mono text-xs">
-                  Pág. {slide.page} de {MORDEC_SLIDES.length}
+                  {t("mordec.page", { page: slide.page, total: MORDEC_SLIDES.length })}
                 </Badge>
                 <h3 className="font-display text-3xl sm:text-4xl font-bold uppercase tracking-tight text-white leading-tight">
                   {slide.title}
@@ -82,7 +83,7 @@ export function MordecCatalogSection() {
 
               <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 space-y-2.5">
                 <div className="text-xs font-mono uppercase tracking-wider text-[#374470] font-semibold">
-                  Especificaciones Clave
+                  {t("mordec.specs")}
                 </div>
                 {slide.keySpecs.map((spec) => (
                   <div key={spec} className="flex items-start gap-2 text-sm text-slate-700">
@@ -93,12 +94,12 @@ export function MordecCatalogSection() {
               </div>
 
               <div className="text-xs text-slate-500">
-                <span className="font-semibold text-slate-700">Recomendado para:</span>{" "}
+                <span className="font-semibold text-slate-700">{t("mordec.recommended")}</span>{" "}
                 {slide.recommendedFor}
               </div>
 
               <div className="text-[11px] text-slate-400 font-mono">
-                Copyright © 2020 Mordec International Pte Ltd. All rights reserved.
+                {t("mordec.copyright")}
               </div>
             </div>
           </div>
@@ -113,7 +114,7 @@ export function MordecCatalogSection() {
               className="cursor-pointer"
             >
               <ChevronLeft className="size-4" />
-              Previous
+              {t("mordec.previous")}
             </Button>
 
             <div className="flex items-center gap-2">
@@ -124,7 +125,7 @@ export function MordecCatalogSection() {
                   className={`size-2.5 rounded-full transition-all cursor-pointer ${
                     idx === currentPage ? "bg-[#374470] scale-125" : "bg-slate-300 hover:bg-slate-400"
                   }`}
-                  aria-label={`Ir a página ${idx + 1}`}
+                  aria-label={t("mordec.goPage", { page: idx + 1 })}
                 />
               ))}
             </div>
@@ -140,7 +141,7 @@ export function MordecCatalogSection() {
               disabled={currentPage === MORDEC_SLIDES.length - 1}
               className="cursor-pointer"
             >
-              Next
+              {t("mordec.next")}
               <ChevronRight className="size-4" />
             </Button>
           </div>
